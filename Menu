@@ -1,0 +1,50 @@
+def open_menu(self):
+    self.clear_content()  # remove previous widgets
+
+    # Page title
+    title = tk.Label(
+        self.content_frame,
+        text="🍽️ Cafeteria Menu 🍽️",
+        font=("Poppins", 18, "bold"),
+        bg="#FFF9C4",
+        fg="black"
+    )
+    title.pack(pady=20)
+
+    # Example menu items
+    menu_items = [
+        ("☕ Coffee", "₹40"),
+        ("🍔 Burger", "₹120"),
+        ("🍕 Pizza", "₹200"),
+        ("🥪 Sandwich", "₹80")
+    ]
+
+    for item, price in menu_items:
+        label = tk.Label(
+            self.content_frame,
+            text=f"{item} - {price}",
+            font=("Poppins", 14),
+            bg="#FFF9C4",
+            fg="#333"
+        )
+        label.pack(pady=5)
+
+    # Back button to return home
+    back_btn = ttk.Button(self.content_frame, text="⬅ Back", command=self.show_home)
+    back_btn.pack(pady=20)
+
+def show_home(self):
+    self.clear_content()
+
+    # Re-add background image
+    self.image_label = tk.Label(self.content_frame, bg="#FFF9C4")
+    self.image_label.place(relx=0, rely=0, relwidth=1, relheight=1)
+
+    # Overlay content/button
+    self.overlay_frame = tk.Frame(self.content_frame, bg="", relief="flat")
+    self.overlay_frame.place(relx=0.5, rely=0.5, anchor="center")
+
+    demo_btn = ttk.Button(self.overlay_frame, text="⚡ Order Now ⚡", command=lambda: print("Order!"))
+    demo_btn.pack(pady=20)
+
+    self.update_image()

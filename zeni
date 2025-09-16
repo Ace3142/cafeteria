@@ -1,0 +1,237 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
+from PIL import Image, ImageTk, ImageEnhance
+import itertools
+import pymysql
+from admin_panel import AdminPanel
+
+
+
+class CafeteriaApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Cafeteria Management System - Zenitsu Theme")
+        self.root.geometry("1000x600")
+        self.root.configure(bg="#FCD65B")
+
+        # -------- Header (Title + Menu) --------
+        header = tk.Frame(self.root, bg="#F1C868", height=80, relief="solid", bd=1)
+        header.pack(side="top", fill="x")
+
+        shadow = tk.Label(
+            header,
+            text="⚡ Cafeteria Management System ⚡",
+            font=("Poppins", 22, "bold"),
+            bg="#FFB300",
+            fg="white"
+        )
+        shadow.place(x=16, y=16)
+
+        title = tk.Label(
+            header,
+            text="⚡ Cafeteria Management System ⚡",
+            font=("Poppins", 22, "bold"),
+            bg="#FCD53C",
+            fg="black"
+        )
+        title.place(x=10, y=10)
+
+       
+
+        # Buttons
+        btn_frame = tk.Frame(header, bg="#F4C829")
+        btn_frame.pack(side="right", padx=20)
+
+        style = ttk.Style()
+        style.configure("TButton", font=("Poppins", 11, "bold"), padding=6)
+
+        menu_btn = ttk.Button(btn_frame, text="🍽️ Menu", command=self.open_menu)
+        order_btn = ttk.Button(btn_frame, text="📝 Orders", command=self.open_orders)
+        login_btn = ttk.Button(btn_frame, text="🔑 Admin", command=self.admin_login)
+
+        menu_btn.grid(row=0, column=0, padx=8)
+        order_btn.grid(row=0, column=1, padx=8)
+        login_btn.grid(row=0, column=2, padx=8)
+
+        # -------- Main Content --------
+        self.content_frame = tk.Frame(self.root, bg="#FFF9C4", bd=1, relief="solid")
+        self.content_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        self.image_paths = ["zeni1.jpg", "zeni2.jpg", "zeni3.jpg"]
+
+        self.images_normal = [Image.open(img).resize((900, 450)) for img in self.image_paths]
+        self.images_dim = [ImageEnhance.Brightness(im).enhance(0.5) for im in self.images_normal]
+
+        self.tk_images_normal = [ImageTk.PhotoImage(im) for im in self.images_normal]
+        self.tk_images_dim = [ImageTk.PhotoImage(im) for im in self.images_dim]
+
+        self.image_cycle = itertools.cycle(zip(self.tk_images_normal, self.tk_images_dim))
+
+        self.image_label = tk.Label(self.content_frame, bg="#FFF8E1")
+        self.image_label.place(relx=0, rely=0, relwidth=1, relheight=1)
+
+        self.overlay_frame = tk.Frame(self.content_frame, bg="", relief="flat")
+        self.overlay_frame.place(relx=0.5, rely=0.5, anchor="center")
+
+        demo_btn = ttk.Button(self.overlay_frame, text="⚡ Order Now ⚡", command=self.open_orders)
+        demo_btn.pack(pady=20)
+
+        self.update_image()
+
+        footer = tk.Label(
+            self.root,
+            text="Powered by Zenitsu Spirit ⚡ | Project by [ACE]",
+            font=("Poppins", 10),
+            bg="#FFD54F",
+            fg="#333"
+        )
+        footer.pack(side="bottom", pady=5)
+
+        # Menu items data
+        self.menu_items = {
+            "Veg Sandwich": 50,
+            "Cheese Pizza": 120,
+            "Pasta": 100,
+            "Cold Coffee": 70,
+            "Chocalate cake": 60,
+            "Burger": 80,
+        }
+
+    # -------- Slideshow --------
+    def update_image(self):
+        img_normal, img_dim = next(self.image_cycle)
+        if len(self.overlay_frame.winfo_children()) > 0:
+            self.image_label.config(image=img_dim)
+        else:
+            self.image_label.config(image=img_normal)
+        self.root.after(2000, self.update_image)
+
+    # -------- Menu Page --------
+    def open_menu(self):
+        menu_window = tk.Toplevel(self.root)
+        menu_window.title("🍽️ Cafeteria Menu")
+        menu_window.geometry("400x400")
+        menu_window.configure(bg="#FFF9C4")
+
+        title = tk.Label(menu_window, text="🍴 Cafeteria Menu 🍴", font=("Poppins", 16, "bold"), bg="#FFF9C4")
+        title.pack(pady=10)
+
+        for item, price in self.menu_items.items():
+            frame = tk.Frame(menu_window, bg="#FFF9C4")
+            frame.pack(fill="x", padx=20, pady=5)
+
+            tk.Label(frame, text=item, font=("Poppins", 12), bg="#FFF9C4", anchor="w").pack(side="left")
+            tk.Label(frame, text=f"₹{price}", font=("Poppins", 12, "bold"), bg="#FFF9C4", fg="green").pack(side="right")
+
+        ttk.Button(menu_window, text="Close", command=menu_window.destroy).pack(pady=15)
+
+    # -------- Orders Page --------
+        # -------- Orders Page --------
+    def open_orders(self):
+        order_window = tk.Toplevel(self.root)
+        order_window.title("📝 Place Your Order")
+        order_window.geometry("500x500")
+        order_window.configure(bg="#FFF9C4")
+
+        title = tk.Label(order_window, text="🛒 Select Items to Order", font=("Poppins", 18, "bold"), bg="#FFF9C4")
+        title.pack(pady=15)
+
+        self.order_vars = {}
+        self.qty_vars = {}
+
+        for item, price in self.menu_items.items():
+            frame = tk.Frame(order_window, bg="#FFF9C4")
+            frame.pack(fill="x", padx=20, pady=10)
+
+            self.order_vars[item] = tk.IntVar(value=0)
+            self.qty_vars[item] = tk.IntVar(value=0)
+
+            # Bigger font for checkbox
+            tk.Checkbutton(
+                frame,
+                text=f"{item} (₹{price})",
+                variable=self.order_vars[item],
+                font=("Poppins", 14, "bold"),
+                bg="#FFF9C4",
+                anchor="w"
+            ).pack(side="left")
+
+            # Bigger font for quantity spinbox
+            qty_spin = tk.Spinbox(
+                frame,
+                from_=0,
+                to=10,
+                textvariable=self.qty_vars[item],
+                width=5,
+                font=("Poppins", 14, "bold"),
+                justify="center"
+            )
+            qty_spin.pack(side="right")
+
+        ttk.Button(order_window, text="✅ Place Order", command=self.place_order).pack(pady=20)
+
+
+    # -------- Place Order Summary --------
+        # -------- Place Order Summary --------
+    def place_order(self):
+        summary = "🛒 Your Order:\n\n"
+        order_summary = []   # ✅ define list here
+        total = 0
+
+        # ✅ database connection
+        con = pymysql.connect(
+            host="localhost",
+            user="root",
+            password="database",  # <-- put your actual MySQL password here
+            database="cafe"
+        )
+        cur = con.cursor()
+
+        for item, selected in self.order_vars.items():
+            if selected.get() == 1:   # if item is selected
+                qty = self.qty_vars[item].get()
+                if qty > 0:
+                    cost = self.menu_items[item] * qty
+                    summary += f"{item} x {qty} = ₹{cost}\n"
+                    order_summary.append(f"{item} x {qty} = ₹{cost}")
+                    total += cost
+
+                    # ✅ save into db
+                    cur.execute(
+                        "INSERT INTO cafeteria (item, quantity, price) VALUES (%s, %s, %s)",
+                        (item, qty, cost)
+                    )
+
+        con.commit()
+        con.close()
+
+        summary += f"\nTotal = ₹{total}"
+        order_summary.append(f"Total = ₹{total}")
+
+        if total == 0:
+            messagebox.showwarning("No Items", "Please select at least one item with quantity.")
+        else:
+            messagebox.showinfo("Order Summary", summary)
+
+
+    def admin_login(self):
+    # Create a new window for admin
+     admin_window = tk.Toplevel(self.root)  # This creates a separate window
+     admin_window.title("🔑 Admin Panel")
+     admin_window.geometry("700x500")
+     admin_window.configure(bg="#FFF9C4")
+
+    # Now you can add widgets here or call AdminPanel class
+    # For simplicity, if using the AdminPanel class:
+     AdminPanel(admin_window)
+
+
+
+        
+
+
+# Run App
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = CafeteriaApp(root)
+    root.mainloop()
